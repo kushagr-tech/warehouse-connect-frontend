@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Warehouse Connect Frontend
 
-## Getting Started
+The premium, high-performance web portal for Warehouse Connect, built with Next.js 14 and Vanilla CSS.
 
-First, run the development server:
+## 🚀 Quick Start
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+### Installation
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+### Configuration
+Create a `.env.local` file (already provided in local dev) with the following:
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Running Locally
+```bash
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🗺️ Page Directory (Sitemap)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Public Pages
+- `/` — Landing page with value proposition and search entry.
+- `/warehouses` — Marketplace / Search results with advanced filters.
+- `/warehouses/[id]` — Public warehouse profile & enquiry form.
 
-## Learn More
+### Auth
+- `/login` — Unified login for all roles.
+- `/register` — New user registration.
 
-To learn more about Next.js, take a look at the following resources:
+### Owner Portal
+- `/dashboard` — KPI overview, recent enquiries, and property management.
+- `/warehouses/new` — Listing creation wizard.
+- `/kyc` — Verification submission flow.
+- `/enquiries/[id]` — **Negotiation Center**: Chat with customers and manage leads.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Admin Portal
+- `/admin` — Platform metrics and high-level stats.
+- `/admin/kyc` — KYC verification queue.
+- `/admin/warehouses` — Warehouse approval queue.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🧪 Testing Credentials
 
-## Deploy on Vercel
+Use the following accounts to test different roles. The password for all mock accounts is **`password`**.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Role | Email ID | Description |
+|---|---|---|
+| **Super Admin** | `admin@warehouseconnect.com` | Full platform control, review queues. |
+| **Warehouse Owner** | `owner@example.com` | Manage properties, respond to leads. |
+| **Customer** | `user@example.com` | Search and submit enquiries. |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 💡 Key Features for Users & Admins
+
+### For Warehouse Owners
+1. **List Property:** Use the `/warehouses/new` page to add your facility.
+2. **Negotiation Center:** When a customer submits an enquiry, click it in your dashboard to open the chat interface. You can accept interest or decline leads directly.
+3. **KYC Verification:** You must complete KYC via the `/kyc` page before your listings can be approved.
+
+### For Platform Admins
+1. **KYC Review:** Visit `/admin/kyc` to approve or reject owner documentation.
+2. **Listing Approval:** New warehouses appear in `/admin/warehouses`. They must be approved before appearing in public search results.
+3. **KPIs:** The `/admin` dashboard provides real-time counts of users, listings, and active enquiries.
+
+## 🎨 Design System
+- **Styling:** Modular Vanilla CSS in `globals.css` and component-level styles.
+- **Components:** Custom-built premium components (Badges, Buttons, Cards, Modals).
+- **Icons:** Standardized emoji-based iconography for a clean, industrial look.
