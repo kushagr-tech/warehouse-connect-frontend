@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { login } from '@/lib/api';
 
 export default function LoginPage() {
@@ -9,6 +10,8 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,11 +21,20 @@ export default function LoginPage() {
     try {
       const res = await login({ email, password });
       if (res.success) {
-        // In a real app we'd save the token to cookies or localStorage and redirect
+        localStorage.setItem('user', JSON.stringify(res.data.user));
         setSuccess(true);
         setTimeout(() => {
           const role = res.data.user.role;
-          window.location.href = (role === 'super_admin' || role === 'admin') ? '/admin' : '/dashboard';
+          const redirect = new URLSearchParams(window.location.search).get('redirect');
+          if (redirect) {
+            window.location.href = redirect;
+          } else if (role === 'super_admin' || role === 'admin') {
+            window.location.href = '/admin';
+          } else if (role === 'customer') {
+            window.location.href = '/customer-dashboard';
+          } else {
+            window.location.href = '/dashboard';
+          }
         }, 1000);
       } else {
         setError(res.errors?.[0]?.message || 'Login failed');
@@ -64,6 +76,7 @@ export default function LoginPage() {
               value={email} 
               onChange={(e) => setEmail(e.target.value)} 
               required 
+              pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
               style={{ padding: '0.75rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', background: 'var(--background)', color: 'var(--foreground)' }} 
             />
           </div>
@@ -72,14 +85,28 @@ export default function LoginPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>Password</label>
             </div>
-            <input 
-              type="password" 
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-              required 
-              style={{ padding: '0.75rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', background: 'var(--background)', color: 'var(--foreground)' }} 
-            />
+            <div style={{ position: 'relative' }}>
+              <input 
+                type={showPassword ? 'text' : 'password'} 
+                value={password} 
+                onChange={(e) => setPassword(e.target.value)} 
+                required 
+                style={{ width: '100%', padding: '0.75rem', paddingRight: '2.5rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', background: 'var(--background)', color: 'var(--foreground)' }} 
+              />
+              <button 
+                type="button" 
+                onClick={() => setShowPassword(!showPassword)}
+                style={{ position: 'absolute', right: '0.5rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem', color: 'var(--muted)' }}
+              >
+                {showPassword ? '👁️' : '👁️‍🗨️'}
+              </button>
+            </div>
           </div>
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', cursor: 'pointer' }}>
+            <input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} />
+            Remember me
+          </label>
 
           <button type="submit" disabled={loading} className="btn btn-primary" style={{ marginTop: '0.5rem' }}>
             {loading ? 'Signing in...' : 'Sign In'}
@@ -87,11 +114,17 @@ export default function LoginPage() {
 
           <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
             <p style={{ fontSize: '0.75rem', color: 'var(--muted)', textAlign: 'center', marginBottom: '0.75rem' }}>Quick Test Login</p>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button type="button" className="btn btn-outline" style={{ flex: 1, fontSize: '0.7rem', padding: '0.5rem' }} onClick={() => { setEmail('admin@warehouseconnect.com'); setPassword('password'); }}>Admin</button>
-              <button type="button" className="btn btn-outline" style={{ flex: 1, fontSize: '0.7rem', padding: '0.5rem' }} onClick={() => { setEmail('owner@example.com'); setPassword('password'); }}>Owner</button>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <button type="button" className="btn btn-outline" style={{ flex: '1 1 45%', fontSize: '0.7rem', padding: '0.5rem' }} onClick={() => { setEmail('superadmin@warehouseconnect.com'); setPassword('password'); }}>Super Admin</button>
+              <button type="button" className="btn btn-outline" style={{ flex: '1 1 45%', fontSize: '0.7rem', padding: '0.5rem' }} onClick={() => { setEmail('admin@warehouseconnect.com'); setPassword('password'); }}>Admin</button>
+              <button type="button" className="btn btn-outline" style={{ flex: '1 1 45%', fontSize: '0.7rem', padding: '0.5rem' }} onClick={() => { setEmail('owner@example.com'); setPassword('password'); }}>Owner</button>
+              <button type="button" className="btn btn-outline" style={{ flex: '1 1 45%', fontSize: '0.7rem', padding: '0.5rem' }} onClick={() => { setEmail('customer@example.com'); setPassword('password'); }}>Customer</button>
             </div>
           </div>
+
+          <p style={{ fontSize: '0.875rem', textAlign: 'center', marginTop: '0.5rem', color: 'var(--muted)' }}>
+            Don't have an account? <Link href="/register" style={{ color: 'var(--primary)', fontWeight: 600 }}>Create an account</Link>
+          </p>
         </form>
       </div>
     </main>

@@ -1,4 +1,4 @@
-export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api/v1';
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -7,9 +7,9 @@ export interface ApiResponse<T = any> {
   meta?: any;
 }
 
-export const fetchWarehouses = async (query?: string): Promise<ApiResponse> => {
-  const url = query 
-    ? `${BASE_URL}/search/warehouses?q=${encodeURIComponent(query)}` 
+export const fetchWarehouses = async (queryString?: string): Promise<ApiResponse> => {
+  const url = queryString 
+    ? `${BASE_URL}/search/warehouses?${queryString}` 
     : `${BASE_URL}/search/warehouses`;
   const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) throw new Error('Failed to fetch warehouses');
@@ -54,6 +54,40 @@ export const login = async (data: any): Promise<ApiResponse> => {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
+  });
+  return res.json();
+};
+
+export const register = async (data: any): Promise<ApiResponse> => {
+  const res = await fetch(`${BASE_URL}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  return res.json();
+};
+
+export const verifyOtp = async (data: { userId: string, otp: string }): Promise<ApiResponse> => {
+  const res = await fetch(`${BASE_URL}/auth/verify-otp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  return res.json();
+};
+
+export const updateWarehouse = async (id: string, data: any): Promise<ApiResponse> => {
+  const res = await fetch(`${BASE_URL}/warehouses/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  return res.json();
+};
+
+export const deleteWarehouse = async (id: string): Promise<ApiResponse> => {
+  const res = await fetch(`${BASE_URL}/warehouses/${id}`, {
+    method: 'DELETE',
   });
   return res.json();
 };

@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-import { BASE_URL as BASE } from '@/lib/api';
+import { BASE_URL as BASE, fetchWarehouseById, updateWarehouse } from '@/lib/api';
 
 const WH_TYPES = ['dry_storage', 'cold_storage', 'open_yard', 'container_storage', 'bonded', 'hazmat', 'multi_use', 'liquid_storage'];
 const PRICING_UNITS = ['per_sqft', 'per_pallet', 'per_container', 'per_cbm'];
 const PRICING_PERIODS = ['daily', 'weekly', 'monthly', 'quarterly', 'yearly'];
 
-export default function NewWarehousePage() {
+export default function EditWarehousePage({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -28,6 +28,7 @@ export default function NewWarehousePage() {
     const savedUser = localStorage.getItem('user');
     if (savedUser) setUser(JSON.parse(savedUser));
 
+    fetchWarehouseById(params.id).then(res => { if (res.success) { const w = res.data; setForm({ ...w, cold_storage_min_temp: w.cold_storage_min_temp || '', cold_storage_max_temp: w.cold_storage_max_temp || '' }); } });
     const pendingForm = sessionStorage.getItem('pendingWarehouse');
     if (pendingForm) {
       setForm(JSON.parse(pendingForm));
@@ -52,13 +53,9 @@ export default function NewWarehousePage() {
     
     setLoading(true); setError(null);
     try {
-      const res = await fetch(`${BASE}/warehouses`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, owner_id: user.id }),
-      });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.errors?.[0]?.message || 'Failed to create');
-      setSuccess(data.data.id);
+      const data = await updateWarehouse(params.id, form);
+      if (!data.success) throw new Error(data.errors?.[0]?.message || 'Failed to update');
+      setSuccess(params.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally { setLoading(false); }
@@ -69,9 +66,9 @@ export default function NewWarehousePage() {
       <main className="container" style={{ padding: '4rem 0', textAlign: 'center' }}>
         <div style={{ maxWidth: 480, margin: '0 auto' }} className="card">
           <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏭</div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1rem', color: 'var(--primary)' }}>Warehouse Created!</h1>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1rem', color: 'var(--primary)' }}>Warehouse Updated!</h1>
           <p style={{ color: 'var(--muted)', marginBottom: '1.5rem' }}>
-            Your warehouse has been saved as a <strong>draft</strong>. Complete connectivity & utilities info, then submit for admin review.
+            Your warehouse details have been successfully updated.
           </p>
           <Link href={`/warehouses/${success}`} className="btn btn-primary">View Warehouse →</Link>
         </div>
@@ -83,8 +80,8 @@ export default function NewWarehousePage() {
     <main className="container" style={{ padding: '2rem 0', minHeight: '100vh', maxWidth: 720 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
-          <h1 style={{ fontSize: '2rem', fontWeight: 800 }}>List a Warehouse</h1>
-          <p style={{ color: 'var(--muted)' }}>Add your facility to the Warehouse Connect marketplace.</p>
+          <h1 style={{ fontSize: '2rem', fontWeight: 800 }}>Edit Warehouse</h1>
+          <p style={{ color: 'var(--muted)' }}>Update your warehouse details.</p>
         </div>
         <Link href="/dashboard" className="btn btn-outline">← Dashboard</Link>
       </div>
@@ -209,7 +206,7 @@ export default function NewWarehousePage() {
         </div>
 
         <button type="submit" disabled={loading} className="btn btn-primary" style={{ padding: '1rem', fontSize: '1.1rem' }}>
-          {loading ? 'Creating...' : '🏭 Create Warehouse Listing'}
+          {loading ? 'Creating...' : '💾 Save Changes'}
         </button>
       </form>
     </main>

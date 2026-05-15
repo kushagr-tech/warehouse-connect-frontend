@@ -45,32 +45,14 @@ export default async function KYCQueuePage() {
                 </p>
               </div>
               <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <KycActionButton userId={k.user_id} action="approve" />
-                <KycActionButton userId={k.user_id} action="reject" />
+                <Link href={`/admin/kyc/${k.user_id}`} className="btn btn-outline" style={{ fontSize: '0.875rem' }}>
+                  Review Details →
+                </Link>
               </div>
             </div>
           ))}
         </div>
       )}
     </main>
-  );
-}
-
-function KycActionButton({ userId, action }: { userId: string; action: 'approve' | 'reject' }) {
-  const isApprove = action === 'approve';
-  return (
-    <form action={async () => {
-      'use server';
-      const body: any = isApprove ? {} : { reason: 'Documents incomplete or illegible' };
-      await fetch(`${BASE}/admin/kyc/${userId}/${action}`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      revalidatePath('/admin/kyc');
-    }}>
-      <button type="submit" className={isApprove ? 'btn btn-primary' : 'btn btn-outline'} style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', color: isApprove ? undefined : '#ef4444', borderColor: isApprove ? undefined : '#ef4444' }}>
-        {isApprove ? '✓ Approve' : '✗ Reject'}
-      </button>
-    </form>
   );
 }

@@ -1,4 +1,4 @@
-:root {
+:root, [data-theme="light"] {
   --background: #fdfdfd;
   --foreground: #1a1a1a;
   --primary: #4f46e5;
@@ -12,18 +12,16 @@
   --radius: 12px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0f172a;
-    --foreground: #f8fafc;
-    --primary: #6366f1;
-    --primary-hover: #818cf8;
-    --secondary: #f472b6;
-    --surface: #1e293b;
-    --border: #334155;
-    --muted: #94a3b8;
-    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.5);
-  }
+[data-theme="dark"] {
+  --background: #0f172a;
+  --foreground: #f8fafc;
+  --primary: #6366f1;
+  --primary-hover: #818cf8;
+  --secondary: #f472b6;
+  --surface: #1e293b;
+  --border: #334155;
+  --muted: #94a3b8;
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.5);
 }
 
 html, body {

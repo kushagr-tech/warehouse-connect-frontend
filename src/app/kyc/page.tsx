@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 import { BASE_URL as BASE } from '@/lib/api';
 
@@ -18,6 +19,27 @@ export default function KYCPage() {
     registered_address_line1: '', city: '', state: '', pincode: '',
     lease_expiry_date: '',
   });
+  const [existingProfile, setExistingProfile] = useState<any>(null);
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      const u = JSON.parse(savedUser);
+      // Try to fetch existing KYC profile
+      fetch(`${BASE}/admin/kyc/${u.id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.data) {
+            setExistingProfile(data.data);
+            setForm(data.data);
+            setSubmitted(true);
+          }
+        })
+        .catch(console.error);
+    } else {
+      window.location.href = '/login?redirect=/kyc';
+    }
+  }, []);
 
   const update = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
@@ -32,16 +54,19 @@ export default function KYCPage() {
   const handleSubmit = async () => {
     setLoading(true); setError(null);
     try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const userId = user.id || 'user-3';
+      
       const profileRes = await fetch(`${BASE}/kyc/profile`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, user_id: 'user-3' }),
+        body: JSON.stringify({ ...form, user_id: userId }),
       });
       const profileData = await profileRes.json();
       if (!profileData.success) throw new Error(profileData.errors?.[0]?.message || 'Failed to save profile');
 
       const submitRes = await fetch(`${BASE}/kyc/submit`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: 'user-3' }),
+        body: JSON.stringify({ user_id: userId }),
       });
       const submitData = await submitRes.json();
       if (!submitData.success) throw new Error(submitData.errors?.[0]?.message || 'Failed to submit');
@@ -53,13 +78,36 @@ export default function KYCPage() {
 
   if (submitted) {
     return (
-      <main className="container" style={{ padding: '4rem 0', textAlign: 'center' }}>
-        <div style={{ maxWidth: 480, margin: '0 auto', padding: '3rem', background: 'var(--surface)', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>✅</div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '1rem', color: 'var(--primary)' }}>KYC Submitted!</h1>
-          <p style={{ color: 'var(--muted)', lineHeight: 1.8 }}>
-            Your KYC documents have been submitted for review. Our team will verify your details within <strong>2 business days</strong>.
-          </p>
+      <main className="container" style={{ padding: '2rem 0', minHeight: '100vh', maxWidth: 680 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+          <h1 style={{ fontSize: '2rem', fontWeight: 800 }}>KYC Profile</h1>
+          <Link href="/dashboard" className="btn btn-outline" style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}>
+            ← Back to Dashboard
+          </Link>
+        </div>
+        <div style={{ padding: '1rem', background: '#eff6ff', color: '#1e3a8a', borderRadius: 'var(--radius)', marginBottom: '2rem', border: '1px solid #bfdbfe' }}>
+          ℹ️ Your KYC details have been submitted and are locked for review.
+        </div>
+
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>Submitted Details</h2>
+          {[
+            ['Company', form.legal_entity_name],
+            ['Ownership', form.ownership_type],
+            ['Land Type', form.land_type],
+            ['GST', form.gst_number || '—'],
+            ['PAN', form.pan_number || '—'],
+            ['CIN', form.cin_number || '—'],
+            ['Address', form.registered_address_line1],
+            ['City', form.city],
+            ['State', form.state],
+            ['Pincode', form.pincode],
+          ].map(([k, v]) => (
+            <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem', background: 'var(--background)', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
+              <span style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>{k}</span>
+              <strong style={{ fontSize: '0.875rem' }}>{v as string}</strong>
+            </div>
+          ))}
         </div>
       </main>
     );
@@ -67,7 +115,12 @@ export default function KYCPage() {
 
   return (
     <main className="container" style={{ padding: '2rem 0', minHeight: '100vh', maxWidth: 680 }}>
-      <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.5rem' }}>KYC Verification</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+        <h1 style={{ fontSize: '2rem', fontWeight: 800 }}>KYC Verification</h1>
+        <Link href="/dashboard" className="btn btn-outline" style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}>
+          ← Back to Dashboard
+        </Link>
+      </div>
       <p style={{ color: 'var(--muted)', marginBottom: '2rem' }}>Complete verification to list your warehouse.</p>
 
       {/* Step Indicator */}

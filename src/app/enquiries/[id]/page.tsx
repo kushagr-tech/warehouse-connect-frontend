@@ -142,7 +142,7 @@ export default async function EnquiryDetailPage({ params }: { params: { id: stri
           <div className="card" style={{ background: 'var(--surface)' }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '1rem' }}>Actions</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {enquiry.status === 'submitted' || enquiry.status === 'viewed' ? (
+              {(enquiry.status === 'submitted' || enquiry.status === 'viewed') && (
                 <>
                   <form action={async () => {
                     'use server';
@@ -159,19 +159,105 @@ export default async function EnquiryDetailPage({ params }: { params: { id: stri
                     <button type="submit" className="btn btn-outline" style={{ width: '100%', color: '#ef4444', borderColor: '#ef4444' }}>Decline Lead</button>
                   </form>
                 </>
-              ) : (
+              )}
+              {(enquiry.status === 'responded' || enquiry.status === 'negotiating') && (
+                <>
+                  <form action={async () => {
+                    'use server';
+                    await fetch(`${BASE}/enquiries/${params.id}/accept`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+                    revalidatePath(`/enquiries/${params.id}`);
+                  }}>
+                    <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>✅ Confirm Acceptance</button>
+                  </form>
+                  <form action={async () => {
+                    'use server';
+                    await fetch(`${BASE}/enquiries/${params.id}/reject`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+                    revalidatePath(`/enquiries/${params.id}`);
+                  }}>
+                    <button type="submit" className="btn btn-outline" style={{ width: '100%', color: '#ef4444', borderColor: '#ef4444' }}>Decline</button>
+                  </form>
+                </>
+              )}
+              {enquiry.status !== 'submitted' && enquiry.status !== 'viewed' && enquiry.status !== 'responded' && enquiry.status !== 'negotiating' && (
                 <p style={{ fontSize: '0.875rem', color: 'var(--muted)', textAlign: 'center', fontStyle: 'italic' }}>
-                  Lead is in {enquiry.status} status.
+                  Lead is in <strong>{enquiry.status}</strong> status.
                 </p>
               )}
             </div>
           </div>
 
-          <div style={{ padding: '1rem', background: '#eff6ff', borderRadius: 'var(--radius)', border: '1px solid #bfdbfe' }}>
-            <p style={{ fontSize: '0.8rem', color: '#1d4ed8', lineHeight: 1.5 }}>
-              <strong>Tip:</strong> Respond within 24 hours to increase your chance of closing this lead by 40%.
-            </p>
-          </div>
+          {enquiry.status === 'accepted' && (
+            <div className="card" style={{ border: '2px solid var(--primary)' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.25rem', color: 'var(--primary)' }}>📄 Create Quotation & Booking</h3>
+              <p style={{ fontSize: '0.8rem', color: 'var(--muted)', marginBottom: '1.25rem' }}>
+                Set the final price with an optional discount and confirm the booking. This will deduct the space from the warehouse.
+              </p>
+              <form action={async (fd) => {
+                'use server';
+                const basePrice = Number(fd.get('base_price'));
+                const discountType = fd.get('discount_type') as string;
+                const discountValue = Number(fd.get('discount_value') || 0);
+                let finalPrice = basePrice;
+                let discountDesc = 'None';
+                if (discountValue > 0) {
+                  if (discountType === 'percent') {
+                    finalPrice = basePrice * (1 - discountValue / 100);
+                    discountDesc = `${discountValue}% off`;
+                  } else {
+                    finalPrice = basePrice - discountValue;
+                    discountDesc = `\u20B9${discountValue} flat off`;
+                  }
+                }
+                await fetch(`${BASE}/enquiries/${params.id}/booking`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ final_price_per_sqft: finalPrice, discount: discountDesc }),
+                });
+                revalidatePath(`/enquiries/${params.id}`);
+              }} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.35rem' }}>Base Price (\u20B9/sq.ft)</label>
+                  <input name="base_price" type="number" required defaultValue={enquiry.proposed_price ?? ''} placeholder="e.g. 22" style={{ width: '100%', padding: '0.65rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', background: 'var(--background)', color: 'var(--foreground)' }} />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.35rem' }}>Discount Type</label>
+                    <select name="discount_type" style={{ width: '100%', padding: '0.65rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', background: 'var(--background)', color: 'var(--foreground)' }}>
+                      <option value="percent">% Percent</option>
+                      <option value="flat">\u20B9 Flat</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.35rem' }}>Discount Value</label>
+                    <input name="discount_value" type="number" min="0" defaultValue="0" style={{ width: '100%', padding: '0.65rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', background: 'var(--background)', color: 'var(--foreground)' }} />
+                  </div>
+                </div>
+                <div style={{ padding: '0.75rem', background: 'var(--background)', borderRadius: 'var(--radius)', border: '1px solid var(--border)', fontSize: '0.8rem', color: 'var(--muted)' }}>
+                  Booking: <strong>{Number(enquiry.required_area_sqft).toLocaleString()} sq.ft</strong> for <strong>{enquiry.duration_months ?? '?'} months</strong>
+                </div>
+                <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.85rem', fontWeight: 700 }}>
+                  \uD83C\uDF89 Confirm Booking
+                </button>
+              </form>
+            </div>
+          )}
+
+          {enquiry.status === 'booked' && (
+            <div style={{ padding: '1.25rem', background: '#dcfce7', borderRadius: 'var(--radius)', border: '1px solid #86efac' }}>
+              <p style={{ fontSize: '1rem', fontWeight: 700, color: '#166534', marginBottom: '0.5rem' }}>✅ Booking Confirmed</p>
+              <p style={{ fontSize: '0.85rem', color: '#166534' }}>
+                Agreed rate: <strong>\u20B9{Number(enquiry.agreed_price ?? 0).toFixed(2)}/sq.ft</strong>
+              </p>
+            </div>
+          )}
+
+          {enquiry.status !== 'booked' && enquiry.status !== 'accepted' && (
+            <div style={{ padding: '1rem', background: '#eff6ff', borderRadius: 'var(--radius)', border: '1px solid #bfdbfe' }}>
+              <p style={{ fontSize: '0.8rem', color: '#1d4ed8', lineHeight: 1.5 }}>
+                <strong>Tip:</strong> Respond within 24 hours to increase your chance of closing this lead by 40%.
+              </p>
+            </div>
+          )}
         </aside>
       </div>
     </main>

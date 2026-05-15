@@ -30,7 +30,7 @@ export default async function WarehousesPage({ searchParams }: { searchParams: {
     error = err instanceof Error ? err.message : 'Failed to load warehouses.';
   }
 
-  const warehouseTypes = ['dry_storage', 'cold_storage', 'open_yard', 'container_storage', 'bonded', 'hazmat', 'multi_use'];
+  const warehouseTypes = ['dry_storage', 'cold_storage', 'open_yard', 'container_storage', 'bonded', 'hazmat', 'multi_use', 'liquid_storage'];
 
   return (
     <main className="container" style={{ padding: '2rem 0', minHeight: '100vh' }}>

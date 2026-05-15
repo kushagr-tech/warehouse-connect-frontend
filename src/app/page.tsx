@@ -1,13 +1,35 @@
+'use client';
+
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 
 export default function Home() {
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) setUser(JSON.parse(savedUser));
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    setUser(null);
+  };
+
   return (
     <main className="container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <header style={{ padding: '2rem 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)' }}>Warehouse Connect</h1>
         <nav style={{ display: 'flex', gap: '0.75rem' }}>
           <Link href="/warehouses" className="btn btn-outline">Browse</Link>
-          <Link href="/login" className="btn btn-primary">Login</Link>
+          {user ? (
+            <>
+              <Link href={['super_admin', 'admin'].includes(user.role) ? '/admin' : '/dashboard'} className="btn btn-primary">Dashboard</Link>
+              <button onClick={handleLogout} className="btn btn-outline">Logout</button>
+            </>
+          ) : (
+            <Link href="/login" className="btn btn-primary">Login</Link>
+          )}
         </nav>
       </header>
 
