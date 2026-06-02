@@ -25,7 +25,7 @@ export default function NewWarehousePage() {
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
+    const savedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
     if (savedUser) setUser(JSON.parse(savedUser));
 
     const pendingForm = sessionStorage.getItem('pendingWarehouse');

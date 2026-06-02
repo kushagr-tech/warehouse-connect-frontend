@@ -21,7 +21,12 @@ export default function LoginPage() {
     try {
       const res = await login({ email, password });
       if (res.success) {
-        localStorage.setItem('user', JSON.stringify(res.data.user));
+        const userStr = JSON.stringify(res.data.user);
+        if (rememberMe) {
+          localStorage.setItem('user', userStr);
+        } else {
+          sessionStorage.setItem('user', userStr);
+        }
         setSuccess(true);
         setTimeout(() => {
           const role = res.data.user.role;

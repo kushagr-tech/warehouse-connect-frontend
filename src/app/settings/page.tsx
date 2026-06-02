@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { BASE_URL } from '@/lib/api';
 
 export default function SettingsPage() {
   const [user, setUser] = useState<any>(null);
@@ -11,7 +12,7 @@ export default function SettingsPage() {
   const [otp, setOtp] = useState('');
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
+    const savedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
     if (savedUser) {
       setUser(JSON.parse(savedUser));
       setLoading(false);
@@ -26,17 +27,51 @@ export default function SettingsPage() {
     setOtpSent(type);
   };
 
-  const handleVerifyOtp = (type: 'email' | 'mobile') => {
-    if (otp !== '123456') {
-      alert('Invalid OTP');
-      return;
+  const handleVerifyOtp = async (type: 'email' | 'mobile') => {
+    try {
+      const res = await fetch(`${BASE_URL}/auth/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, otp })
+      });
+      const data = await res.json();
+      if (data.success) {
+        const updatedUser = { ...user, [`${type}_verified`]: true };
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        alert(`${type} verified successfully!`);
+        setOtpSent(null);
+        setOtp('');
+      } else {
+        alert(data.errors?.[0]?.message || 'OTP verification failed');
+      }
+    } catch (err) {
+      alert('Network error');
     }
-    const updatedUser = { ...user, [`${type}_verified`]: true };
-    setUser(updatedUser);
-    localStorage.setItem('user', JSON.stringify(updatedUser));
-    alert(`${type} verified successfully!`);
-    setOtpSent(null);
-    setOtp('');
+  };
+
+  const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const current_password = formData.get('current_password');
+    const new_password = formData.get('new_password');
+    
+    try {
+      const res = await fetch(`${BASE_URL}/users/change-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, current_password, new_password })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Password updated successfully');
+        (e.target as HTMLFormElement).reset();
+      } else {
+        alert(data.errors?.[0]?.message || 'Failed to change password');
+      }
+    } catch (err) {
+      alert('Network error');
+    }
   };
 
   if (loading) return <main className="container" style={{ padding: '2rem 0' }}>Loading...</main>;
@@ -106,14 +141,14 @@ export default function SettingsPage() {
         {/* Change Password */}
         <section className="card">
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>Change Password</h2>
-          <form onSubmit={e => { e.preventDefault(); alert('Password updated successfully'); }} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Current Password</label>
-              <input type="password" required style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', background: 'var(--background)' }} />
+              <input name="current_password" type="password" required style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', background: 'var(--background)' }} />
             </div>
             <div>
               <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>New Password</label>
-              <input type="password" required minLength={8} style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', background: 'var(--background)' }} />
+              <input name="new_password" type="password" required minLength={8} style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', background: 'var(--background)' }} />
             </div>
             <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start', marginTop: '0.5rem' }}>Update Password</button>
           </form>

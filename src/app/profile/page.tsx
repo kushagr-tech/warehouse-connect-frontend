@@ -8,25 +8,45 @@ export default function ProfilePage() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
+    const savedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      const u = JSON.parse(savedUser);
+      setUser(u);
+      setFirstName(u.first_name || '');
+      setLastName(u.last_name || '');
       setLoading(false);
     } else {
       window.location.href = '/login';
     }
   }, []);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    // Mock save
-    setTimeout(() => {
+    try {
+      const res = await fetch(`${BASE_URL}/users/profile`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, first_name: firstName, last_name: lastName })
+      });
+      const data = await res.json();
+      if (data.success) {
+        const updated = { ...user, first_name: firstName, last_name: lastName };
+        setUser(updated);
+        localStorage.setItem('user', JSON.stringify(updated));
+        alert('Profile details updated successfully.');
+      } else {
+        alert(data.errors?.[0]?.message || 'Failed to update profile');
+      }
+    } catch (err) {
+      alert('An error occurred.');
+    } finally {
       setSaving(false);
-      alert('Profile details updated successfully.');
-    }, 800);
+    }
   };
 
   if (loading) return <main className="container" style={{ padding: '2rem 0' }}>Loading...</main>;
@@ -82,11 +102,11 @@ export default function ProfilePage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>First Name</label>
-              <input type="text" placeholder="e.g. John" style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', background: 'var(--background)' }} />
+              <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="e.g. John" style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', background: 'var(--background)' }} />
             </div>
             <div>
               <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Last Name</label>
-              <input type="text" placeholder="e.g. Doe" style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', background: 'var(--background)' }} />
+              <input type="text" value={lastName} onChange={e => setLastName(e.target.value)} placeholder="e.g. Doe" style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius)', border: '1px solid var(--border)', background: 'var(--background)' }} />
             </div>
           </div>
 

@@ -12,7 +12,7 @@ export default function EnquiriesPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
+    const savedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
     if (savedUser) {
       setUser(JSON.parse(savedUser));
     } else {

@@ -22,7 +22,7 @@ export default function KYCPage() {
   const [existingProfile, setExistingProfile] = useState<any>(null);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
+    const savedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
     if (savedUser) {
       const u = JSON.parse(savedUser);
       // Try to fetch existing KYC profile

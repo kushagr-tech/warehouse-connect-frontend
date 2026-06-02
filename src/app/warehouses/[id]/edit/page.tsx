@@ -25,7 +25,7 @@ export default function EditWarehousePage({ params }: { params: { id: string } }
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
+    const savedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
     if (savedUser) setUser(JSON.parse(savedUser));
 
     fetchWarehouseById(params.id).then(res => { if (res.success) { const w = res.data; setForm({ ...w, cold_storage_min_temp: w.cold_storage_min_temp || '', cold_storage_max_temp: w.cold_storage_max_temp || '' }); } });

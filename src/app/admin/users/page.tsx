@@ -13,7 +13,7 @@ export default function AdminUsersPage() {
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
+    const savedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
     if (savedUser) {
       const u = JSON.parse(savedUser);
       if (u.role !== 'admin' && u.role !== 'super_admin') {

@@ -7,12 +7,13 @@ export default function Home() {
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) setUser(JSON.parse(savedUser));
+    const savedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+    if (savedUser) {setUser(JSON.parse(savedUser));}
   }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('user');
+    sessionStorage.removeItem('user');
     setUser(null);
   };
 

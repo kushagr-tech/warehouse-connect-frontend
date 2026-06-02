@@ -7,6 +7,7 @@ export default function LogoutButton({ className, style }: { className?: string,
 
   const handleLogout = () => {
     localStorage.removeItem('user');
+    sessionStorage.removeItem('user');
     window.location.href = '/login';
   };
 
